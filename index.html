@@ -224,13 +224,13 @@
 
                 mole.classList.add('up');
                 
-                const popTime = randomTime(500, 1000); // How long the mole stays up
+                const popTime = randomTime(800, 1500); // How long the mole stays up (Slower)
                 
                 setTimeout(() => {
                     mole.classList.remove('up');
                     mole.innerHTML = ''; // Clear the image when mole hides
                     if (gameStarted) {
-                        molePopTimerId = setTimeout(popUpMole, randomTime(800, 1500)); // Time until next mole pops
+                        molePopTimerId = setTimeout(popUpMole, randomTime(1000, 1800)); // Time until next mole pops (Slower)
                     }
                 }, popTime);
             }
@@ -288,15 +288,12 @@
                 gameOverScreen.classList.remove('hidden');
                 finalScoreDisplay.textContent = `Your Score: ${score}`;
 
-                if (score >= 20) { // Example threshold for good score
-                    finalMessage.textContent = "You're a Whack-a-Love-Mole Master!";
-                    resultGif.src = "https://media.giphy.com/media/lMqd6xH8J0lQhK2k0Q/giphy.gif"; // Celebratory GIF
-                } else if (score >= 10) {
-                    finalMessage.textContent = "Good Job, my love!";
-                    resultGif.src = "https://media.giphy.com/media/l4pS2x7oXzK0B7jO/giphy.gif"; // Cute positive GIF
-                } else {
-                    finalMessage.textContent = "Better luck next time, sweetie!";
-                    resultGif.src = "https://media.giphy.com/media/l4pTsh45Dg7babyJjS/giphy.gif"; // Slightly sad/funny GIF
+                if (score >= 5) { // Score 5 or more
+                    finalMessage.textContent = "Yay! You did it!";
+                    resultGif.src = "https://media.giphy.com/media/G3va31oEkyhiw/giphy.gif"; // Kissing GIF
+                } else { // Score less than 5
+                    finalMessage.textContent = "Oh no, try again!";
+                    resultGif.src = "https://media.giphy.com/media/10tIjpzIu8fe0/giphy.gif"; // Crying GIF
                 }
             }
             
@@ -327,5 +324,6 @@
     </script>
 </body>
 </html>
+
 
 
