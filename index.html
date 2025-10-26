@@ -308,11 +308,11 @@
                 if (rainInterval) clearInterval(rainInterval); // Clear any old rain
 
                 if (score >= 5) { // Score 5 or more
-                    finalMessage.textContent = "Yay! You did it!";
+                    finalMessage.textContent = "Dammee Tompleted!";
                     resultGif.src = "kiss.gif"; // Your Kissing GIF
                     rainInterval = setInterval(() => createRain('❤️'), 200); // Rain hearts
                 } else { // Score less than 5
-                    finalMessage.textContent = "Oh no, try again!";
+                    finalMessage.textContent = "Naap Naap, try again!";
                     resultGif.src = "cry.gif"; // Your Crying GIF
                     rainInterval = setInterval(() => createRain('😭'), 200); // Rain crying emojis
                 }
