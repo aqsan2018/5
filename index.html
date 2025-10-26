@@ -134,6 +134,21 @@
             0% { transform: translateY(0vh); opacity: 1; }
             100% { transform: translateY(110vh); opacity: 1; }
         }
+
+        /* --- New Bomb Effect --- */
+        .bomb-effect {
+            position: fixed;
+            font-size: 3rem;
+            animation: bomb-pop 0.5s ease-out forwards;
+            pointer-events: none;
+            z-index: 400; /* On top of rain and screen */
+        }
+
+        @keyframes bomb-pop {
+            0% { transform: scale(0.5); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.8; }
+            100% { transform: scale(1.2); opacity: 0; }
+        }
     </style>
 </head>
 <body class="overflow-hidden">
@@ -296,6 +311,7 @@
                 } else {
                     score = Math.max(0, score - 5); // Subtract points for bad mole, don't go below 0
                     badSound.play();
+                    createBombEffect(event.clientX, event.clientY); // Add bomb effect
                 }
                 scoreSpan.textContent = score;
             }
@@ -308,7 +324,7 @@
                 if (rainInterval) clearInterval(rainInterval); // Clear any old rain
 
                 if (score >= 5) { // Score 5 or more
-                    finalMessage.textContent = "Dammee Tompleted!";
+                    finalMessage.textContent = "Dammee Tompleteed!";
                     resultGif.src = "kiss.gif"; // Your Kissing GIF
                     rainInterval = setInterval(() => createRain('❤️'), 200); // Rain hearts
                 } else { // Score less than 5
@@ -320,7 +336,7 @@
             
             // --- Confetti Animation ---
             function createConfetti() {
-                for (let i = 0; i < 5; i++) { // Spawn 5 confetti pieces per hit
+                for (let i = 0; i < 15; i++) { // Spawn 15 confetti pieces per hit
                     const confetti = document.createElement('div');
                     confetti.classList.add('confetti');
                     confetti.style.left = `${Math.random() * 100}vw`;
@@ -346,6 +362,21 @@
                 }, 5000); // Remove after 5 seconds
             }
 
+            // --- New Bomb Effect Function ---
+            function createBombEffect(x, y) {
+                const bomb = document.createElement('div');
+                bomb.classList.add('bomb-effect');
+                bomb.textContent = '💣';
+                // Adjust position to center the bomb on the cursor
+                bomb.style.left = `${x - 24}px`; 
+                bomb.style.top = `${y - 24}px`;
+                document.body.appendChild(bomb);
+
+                setTimeout(() => {
+                    bomb.remove();
+                }, 500); // Remove after 0.5s animation
+            }
+
             // --- Event Listeners ---
             startButton.addEventListener('click', startGame);
             playAgainButton.addEventListener('click', () => {
@@ -362,6 +393,7 @@
     </script>
 </body>
 </html>
+
 
 
 
