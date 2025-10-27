@@ -1,483 +1,470 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Whack-a-Love-Mole!</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Whack-a-Love-Mole!</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
 
-    <!-- 🔨 Hammer Favicon -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔨</text></svg>">
+  <!-- Hammer favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔨</text></svg>">
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Pacifico', cursive;
+      background-color: #fce7f3;
+      overflow: hidden;
+      min-height: 100vh;
+    }
 
-    <style>
-        body {
-            font-family: 'Pacifico', cursive;
-            background-color: #fce7f3;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            overflow: hidden;
-            flex-direction: column;
-        }
+    /* --- LOCK OVERLAY --- */
+    #password-overlay {
+      position: fixed;
+      inset: 0;
+      backdrop-filter: blur(8px);
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      transition: opacity 0.3s ease;
+    }
 
-        #game-area {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: repeat(3, 1fr);
-            gap: 1rem;
-            background-color: #fbcfe8;
-            padding: 1rem;
-            border-radius: 2rem;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-            position: relative;
-            margin-bottom: 2rem;
-            width: 300px;
-            height: 300px;
-        }
+    #lock-box {
+      background-color: white;
+      padding: 2rem;
+      border-radius: 1.5rem;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      width: 90%;
+      max-width: 320px;
+    }
 
-        @media (min-width: 640px) {
-            #game-area {
-                gap: 1.5rem;
-                padding: 1.5rem;
-                width: 350px;
-                height: 350px;
-            }
-        }
+    #lock-box input {
+      width: 100%;
+      padding: 0.6rem;
+      margin-top: 1rem;
+      border: 2px solid #be185d;
+      border-radius: 0.75rem;
+      text-align: center;
+      font-family: 'Pacifico', cursive;
+      outline: none;
+    }
 
-        .hole {
-            width: 100%;
-            height: 100%;
-            background-color: #e9d5ff;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            overflow: hidden;
-            box-shadow: inset 0 5px 10px rgba(0,0,0,0.2);
-        }
+    #lock-box button {
+      margin-top: 1rem;
+      background-color: #be185d;
+      color: white;
+      font-weight: bold;
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 0.75rem;
+      cursor: pointer;
+    }
 
-        .mole {
-            position: absolute;
-            bottom: -100px;
-            transition: bottom 0.2s ease-out;
-            cursor: pointer;
-            user-select: none;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+    #error-message {
+      color: red;
+      margin-top: 0.5rem;
+      min-height: 1.2rem;
+    }
 
-        .mole.up { bottom: 5px; }
-        .mole.hit { animation: hit-animation 0.2s ease-out; opacity: 0; }
+    /* Shake animation for wrong password */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-8px); }
+      40%, 80% { transform: translateX(8px); }
+    }
 
-        @keyframes hit-animation {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.2); opacity: 0.8; }
-            100% { transform: scale(0.8); opacity: 0; }
-        }
+    #lock-box.shake { animation: shake 0.5s; }
 
-        #score-board {
-            background-color: #fff;
-            padding: 1rem 2rem;
-            border-radius: 1.5rem;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            margin-bottom: 1.5rem;
-            display: flex;
-            gap: 2rem;
-            font-size: 1.8rem;
-            color: #be185d;
-        }
+    /* Main content hidden by default */
+    #main-content {
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
 
-        .confetti {
-            position: fixed;
-            width: 10px;
-            height: 10px;
-            background-color: #f0f;
-            animation: confetti-fall 2s linear forwards;
-            pointer-events: none;
-            border-radius: 50%;
-            opacity: 0;
-            z-index: 199;
-        }
+    #main-content.visible {
+      visibility: visible;
+      opacity: 1;
+    }
 
-        @keyframes confetti-fall {
-            0% { transform: translateY(-10vh) rotate(0deg); opacity: 0; }
-            10% { opacity: 1; }
-            100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
-        }
+    /* --- GAME STYLES --- */
+    #main-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
 
-        .rain {
-            position: fixed;
-            top: -10vh;
-            font-size: 2rem;
-            pointer-events: none;
-            user-select: none;
-            animation: fall 5s linear forwards;
-            z-index: 300;
-        }
+    #game-area {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 1rem;
+      background-color: #fbcfe8;
+      padding: 1rem;
+      border-radius: 2rem;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+      margin-bottom: 2rem;
+      width: 300px;
+      height: 300px;
+    }
 
-        @keyframes fall {
-            0% { transform: translateY(0vh); opacity: 1; }
-            100% { transform: translateY(110vh); opacity: 1; }
-        }
+    @media (min-width: 640px) {
+      #game-area {
+        gap: 1.5rem;
+        padding: 1.5rem;
+        width: 350px;
+        height: 350px;
+      }
+    }
 
-        .bomb-effect {
-            position: fixed;
-            font-size: 3rem;
-            animation: bomb-pop 0.5s ease-out forwards;
-            pointer-events: none;
-            z-index: 400;
-        }
+    .hole {
+      width: 100%;
+      height: 100%;
+      background-color: #e9d5ff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 5px 10px rgba(0,0,0,0.2);
+    }
 
-        @keyframes bomb-pop {
-            0% { transform: scale(0.5); opacity: 1; }
-            50% { transform: scale(1.5); opacity: 0.8; }
-            100% { transform: scale(1.2); opacity: 0; }
-        }
+    .mole {
+      position: absolute;
+      bottom: -100px;
+      transition: bottom 0.2s ease-out;
+      cursor: pointer;
+      user-select: none;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
-        /* --- Password Lock Styles --- */
-        #password-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: rgba(0, 0, 0, 0.65);
-            backdrop-filter: blur(8px);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 500;
-            transition: opacity 0.3s ease-out;
-        }
+    .mole.up { bottom: 5px; }
+    .mole.hit { animation: hit-animation 0.2s ease-out; opacity: 0; }
 
-        #lock-box {
-            background-color: #1f1f1f;
-            padding: 2rem;
-            border-radius: 1rem;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            text-align: center;
-            width: 90%;
-            max-width: 320px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+    @keyframes hit-animation {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.2); opacity: 0.8; }
+      100% { transform: scale(0.8); opacity: 0; }
+    }
 
-        #lock-gif {
-            width: 150px;
-            height: 150px;
-            border-radius: 0.75rem;
-            margin-bottom: 1.5rem;
-        }
+    #score-board {
+      background-color: #fff;
+      padding: 1rem 2rem;
+      border-radius: 1.5rem;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      margin-bottom: 1.5rem;
+      display: flex;
+      gap: 2rem;
+      font-size: 1.8rem;
+      color: #be185d;
+    }
 
-        #password-input {
-            font-family: 'Orbitron', sans-serif;
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            border: 2px solid #4b5563;
-            background-color: #374151;
-            color: white;
-            font-size: 1.1rem;
-            text-align: center;
-            letter-spacing: 2px;
-        }
+    #start-button {
+      display: block;
+      margin: 2rem auto 0 auto;
+    }
 
-        #password-input:focus {
-            outline: none;
-            border-color: #ec4899;
-        }
+    #game-over-screen {
+      background-color: rgba(255, 255, 255, 0.95);
+      z-index: 200;
+    }
 
-        #submit-button {
-            font-family: 'Orbitron', sans-serif;
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            background-color: #ec4899;
-            color: white;
-            font-weight: 700;
-            margin-top: 1rem;
-            border: none;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
+    .confetti {
+      position: fixed;
+      width: 10px;
+      height: 10px;
+      background-color: #f0f;
+      animation: confetti-fall 2s linear forwards;
+      pointer-events: none;
+      border-radius: 50%;
+      opacity: 0;
+      z-index: 199;
+    }
 
-        #submit-button:hover { background-color: #db2777; }
+    @keyframes confetti-fall {
+      0% { transform: translateY(-10vh) rotate(0deg); opacity: 0; }
+      10% { opacity: 1; }
+      100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+    }
 
-        #error-message {
-            color: #ef4444;
-            font-size: 0.9rem;
-            height: 1.25rem;
-            margin-top: 0.75rem;
-        }
+    .rain {
+      position: fixed;
+      top: -10vh;
+      font-size: 2rem;
+      pointer-events: none;
+      user-select: none;
+      animation: fall 5s linear forwards;
+      z-index: 300;
+    }
 
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-8px); }
-            75% { transform: translateX(8px); }
-        }
+    @keyframes fall {
+      0% { transform: translateY(0vh); opacity: 1; }
+      100% { transform: translateY(110vh); opacity: 1; }
+    }
 
-        .shake { animation: shake 0.3s ease-in-out; }
-    </style>
+    .bomb-effect {
+      position: fixed;
+      font-size: 3rem;
+      animation: bomb-pop 0.5s ease-out forwards;
+      pointer-events: none;
+      z-index: 400;
+    }
+
+    @keyframes bomb-pop {
+      0% { transform: scale(0.5); opacity: 1; }
+      50% { transform: scale(1.5); opacity: 0.8; }
+      100% { transform: scale(1.2); opacity: 0; }
+    }
+  </style>
 </head>
-<body class="overflow-hidden">
 
-    <!-- Password Lock Overlay -->
-    <div id="password-overlay">
-        <form id="lock-box">
-            <img id="lock-gif" src="dudu-no-dudu.gif" alt="Dudu Bubu No">
-            <input id="password-input" type="password" placeholder="Enter Password">
-            <p id="error-message"></p>
-            <button id="submit-button" type="submit">Unlock</button>
-        </form>
+<body>
+
+  <!-- Password Overlay -->
+  <div id="password-overlay">
+    <div id="lock-box">
+      <h2 class="text-2xl text-pink-600 mb-2">Enter Password</h2>
+      <input type="password" id="password-input" placeholder="Enter Password">
+      <button id="unlock-button">Unlock</button>
+      <div id="error-message"></div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div id="main-content">
+    <div id="score-board">
+      <div>Score: <span id="score">0</span></div>
+      <div>Time: <span id="time">30</span>s</div>
     </div>
 
-    <!-- Main Game -->
-    <div id="main-content" style="visibility:hidden; opacity:0; transition:opacity 0.5s ease-in;">
-        <div id="score-board">
-            <div>Score: <span id="score">0</span></div>
-            <div>Time: <span id="time">30</span>s</div>
-        </div>
+    <div id="game-area"></div>
 
-        <div id="game-area"></div>
+    <button id="start-button" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-8 rounded-full shadow-lg text-2xl">
+      Start Game!
+    </button>
 
-        <button id="start-button" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-8 rounded-full shadow-lg text-2xl mt-8">
-            Start Game!
-        </button>
-
-        <div id="game-over-screen" class="hidden absolute inset-0 flex-col items-center justify-center text-center p-6">
-            <h1 id="final-message" class="text-5xl text-purple-700 mb-4"></h1>
-            <img id="result-gif" src="" alt="Result GIF" class="w-48 h-48 mx-auto rounded-lg mb-6">
-            <p id="final-score" class="text-3xl text-gray-700 mb-6"></p>
-            <button id="play-again-button" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-full shadow-lg text-2xl">
-                Play Again!
-            </button>
-        </div>
+    <div id="game-over-screen" class="hidden absolute inset-0 flex-col items-center justify-center text-center p-6">
+      <h1 id="final-message" class="text-5xl text-purple-700 mb-4"></h1>
+      <img id="result-gif" src="" alt="Result GIF" class="w-48 h-48 mx-auto rounded-lg mb-6">
+      <p id="final-score" class="text-3xl text-gray-700 mb-6"></p>
+      <button id="play-again-button" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-full shadow-lg text-2xl">
+        Play Again!
+      </button>
     </div>
 
-    <!-- Audio -->
     <audio id="good-sound" src="good_sound.mp3"></audio>
     <audio id="bad-sound" src="bad_sound.mp3"></audio>
+  </div>
 
-    <script>
-        // --- PASSWORD LOCK LOGIC ---
-        document.addEventListener('DOMContentLoaded', () => {
-            const passwordOverlay = document.getElementById('password-overlay');
-            const lockBox = document.getElementById('lock-box');
-            const passwordInput = document.getElementById('password-input');
-            const errorMessage = document.getElementById('error-message');
-            const mainContent = document.getElementById('main-content');
-            const correctPassword = "28072018";
+  <script>
+    // --- LOCK SCRIPT ---
+    const passwordOverlay = document.getElementById('password-overlay');
+    const lockBox = document.getElementById('lock-box');
+    const unlockButton = document.getElementById('unlock-button');
+    const passwordInput = document.getElementById('password-input');
+    const errorMessage = document.getElementById('error-message');
+    const mainContent = document.getElementById('main-content');
+    const correctPassword = "28072018";
 
-            function unlockGame() {
-                passwordOverlay.style.opacity = '0';
-                setTimeout(() => passwordOverlay.style.display = 'none', 300);
-                mainContent.style.visibility = 'visible';
-                mainContent.style.opacity = '1';
-                initGame();
-            }
+    function unlockSite() {
+      const enteredPassword = passwordInput.value.trim();
+      if (enteredPassword === correctPassword) {
+        sessionStorage.setItem('isUnlocked', 'true');
+        passwordOverlay.style.opacity = '0';
+        setTimeout(() => { passwordOverlay.style.display = 'none'; }, 300);
+        mainContent.classList.add('visible');
+      } else {
+        errorMessage.textContent = 'Wrong Password. Try Again!';
+        lockBox.classList.add('shake');
+        setTimeout(() => { lockBox.classList.remove('shake'); errorMessage.textContent = ''; }, 1000);
+      }
+    }
 
-            if (sessionStorage.getItem('isUnlocked') === 'true') unlockGame();
+    unlockButton.addEventListener('click', unlockSite);
+    passwordInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') unlockSite(); });
 
-            lockBox.addEventListener('submit', e => {
-                e.preventDefault();
-                const entered = passwordInput.value;
-                if (entered === correctPassword) {
-                    sessionStorage.setItem('isUnlocked', 'true');
-                    unlockGame();
-                } else {
-                    errorMessage.textContent = 'Wrong Password. Try Again!';
-                    lockBox.classList.add('shake');
-                    passwordInput.value = '';
-                    setTimeout(() => {
-                        lockBox.classList.remove('shake');
-                        errorMessage.textContent = '';
-                    }, 1000);
-                }
-            });
+    if (sessionStorage.getItem('isUnlocked') === 'true') {
+      passwordOverlay.style.display = 'none';
+      mainContent.classList.add('visible');
+    }
 
-            // --- Original Game Code ---
-            function initGame() {
-                // Your original game JS code below, unchanged
-                const gameArea = document.getElementById('game-area');
-                const scoreSpan = document.getElementById('score');
-                const timeSpan = document.getElementById('time');
-                const startButton = document.getElementById('start-button');
-                const gameOverScreen = document.getElementById('game-over-screen');
-                const finalMessage = document.getElementById('final-message');
-                const resultGif = document.getElementById('result-gif');
-                const finalScoreDisplay = document.getElementById('final-score');
-                const playAgainButton = document.getElementById('play-again-button');
-                const goodSound = document.getElementById('good-sound');
-                const badSound = document.getElementById('bad-sound');
+    // --- GAME SCRIPT ---
+    document.addEventListener('DOMContentLoaded', () => {
+      const gameArea = document.getElementById('game-area');
+      const scoreSpan = document.getElementById('score');
+      const timeSpan = document.getElementById('time');
+      const startButton = document.getElementById('start-button');
+      const gameOverScreen = document.getElementById('game-over-screen');
+      const finalMessage = document.getElementById('final-message');
+      const resultGif = document.getElementById('result-gif');
+      const finalScoreDisplay = document.getElementById('final-score');
+      const playAgainButton = document.getElementById('play-again-button');
+      const goodSound = document.getElementById('good-sound');
+      const badSound = document.getElementById('bad-sound');
 
-                let score = 0;
-                let time = 30;
-                let timerId;
-                let molePopTimerId;
-                let lastHole;
-                let gameStarted = false;
-                let rainInterval;
+      let score = 0;
+      let time = 30;
+      let timerId;
+      let molePopTimerId;
+      let lastHole;
+      let gameStarted = false;
+      let rainInterval;
 
-                const goodImages = ["good-mole.png", "heart.png", "flower.png"];
-                const badImages = ["bad-mole.png"];
-                const holes = [];
+      const goodImages = ["good-mole.png", "heart.png", "flower.png"];
+      const badImages = ["bad-mole.png"];
+      const holes = [];
 
-                function createHoles() {
-                    for (let i = 0; i < 9; i++) {
-                        const holeDiv = document.createElement('div');
-                        holeDiv.classList.add('hole');
-                        const moleDiv = document.createElement('div');
-                        moleDiv.classList.add('mole');
-                        moleDiv.addEventListener('click', whack);
-                        holeDiv.appendChild(moleDiv);
-                        gameArea.appendChild(holeDiv);
-                        holes.push(holeDiv);
-                    }
-                }
+      function createHoles() {
+        for (let i = 0; i < 9; i++) {
+          const holeDiv = document.createElement('div');
+          holeDiv.classList.add('hole');
+          const moleDiv = document.createElement('div');
+          moleDiv.classList.add('mole');
+          moleDiv.addEventListener('click', whack);
+          holeDiv.appendChild(moleDiv);
+          gameArea.appendChild(holeDiv);
+          holes.push(holeDiv);
+        }
+      }
 
-                function randomHole(currentHoles) {
-                    const idx = Math.floor(Math.random() * currentHoles.length);
-                    const hole = currentHoles[idx];
-                    if (hole === lastHole) return randomHole(currentHoles);
-                    lastHole = hole;
-                    return hole;
-                }
+      function randomHole(arr) {
+        const idx = Math.floor(Math.random() * arr.length);
+        const hole = arr[idx];
+        if (hole === lastHole) return randomHole(arr);
+        lastHole = hole;
+        return hole;
+      }
 
-                function randomTime(min, max) {
-                    return Math.round(Math.random() * (max - min) + min);
-                }
+      function randomTime(min, max) {
+        return Math.round(Math.random() * (max - min) + min);
+      }
 
-                function popUpMole() {
-                    if (!gameStarted) return;
-                    const hole = randomHole(holes);
-                    const mole = hole.querySelector('.mole');
-                    const isBadMole = Math.random() < 0.25;
-                    const type = isBadMole ? 'bad' : 'good';
-                    const imageName = isBadMole ? badImages[Math.floor(Math.random() * badImages.length)] : goodImages[Math.floor(Math.random() * goodImages.length)];
-                    mole.innerHTML = `<img src="${imageName}" alt="${type}" class="mole-image w-16 h-16 sm:w-20 sm:h-20 pointer-events-none">`;
-                    mole.dataset.type = type;
-                    mole.classList.add('up');
-                    const popTime = randomTime(800, 1500);
-                    setTimeout(() => {
-                        mole.classList.remove('up');
-                        mole.innerHTML = '';
-                        if (gameStarted) molePopTimerId = setTimeout(popUpMole, randomTime(1000, 1800));
-                    }, popTime);
-                }
+      function popUpMole() {
+        if (!gameStarted) return;
+        const hole = randomHole(holes);
+        const mole = hole.querySelector('.mole');
+        const isBad = Math.random() < 0.25;
+        const type = isBad ? 'bad' : 'good';
+        const img = isBad ? badImages[Math.floor(Math.random() * badImages.length)] : goodImages[Math.floor(Math.random() * goodImages.length)];
+        mole.innerHTML = `<img src="${img}" alt="${type}" class="mole-image w-16 h-16 sm:w-20 sm:h-20 pointer-events-none" onerror="this.style.display='none'">`;
+        mole.dataset.type = type;
+        mole.classList.remove('hit');
+        mole.classList.add('up');
 
-                function startGame() {
-                    score = 0;
-                    time = 30;
-                    gameStarted = true;
-                    scoreSpan.textContent = score;
-                    timeSpan.textContent = time;
-                    gameOverScreen.classList.add('hidden');
-                    startButton.classList.add('hidden');
-                    gameArea.querySelectorAll('.mole').forEach(m => {
-                        m.classList.remove('up', 'hit');
-                        m.innerHTML = '';
-                    });
-                    popUpMole();
-                    timerId = setInterval(countdown, 1000);
-                }
+        const popTime = randomTime(800, 1500);
+        setTimeout(() => {
+          mole.classList.remove('up');
+          mole.innerHTML = '';
+          if (gameStarted) molePopTimerId = setTimeout(popUpMole, randomTime(1000, 1800));
+        }, popTime);
+      }
 
-                function countdown() {
-                    time--;
-                    timeSpan.textContent = time;
-                    if (time <= 0) {
-                        clearInterval(timerId);
-                        clearTimeout(molePopTimerId);
-                        gameStarted = false;
-                        endGame();
-                    }
-                }
+      function startGame() {
+        score = 0; time = 30; gameStarted = true;
+        scoreSpan.textContent = score; timeSpan.textContent = time;
+        gameOverScreen.classList.add('hidden');
+        startButton.classList.add('hidden');
+        gameArea.querySelectorAll('.mole').forEach(m => { m.classList.remove('up', 'hit'); m.innerHTML = ''; });
+        popUpMole();
+        timerId = setInterval(countdown, 1000);
+      }
 
-                function whack(event) {
-                    if (!gameStarted || !event.isTrusted) return;
-                    const mole = event.target;
-                    if (!mole.classList.contains('up')) return;
-                    mole.classList.remove('up');
-                    mole.classList.add('hit');
-                    if (mole.dataset.type === 'good') {
-                        score++;
-                        goodSound.play();
-                        createConfetti();
-                    } else {
-                        score = Math.max(0, score - 5);
-                        badSound.play();
-                        createBombEffect(event.clientX, event.clientY);
-                    }
-                    scoreSpan.textContent = score;
-                }
+      function countdown() {
+        time--;
+        timeSpan.textContent = time;
+        if (time <= 0) {
+          clearInterval(timerId);
+          clearTimeout(molePopTimerId);
+          gameStarted = false;
+          endGame();
+        }
+      }
 
-                function endGame() {
-                    gameOverScreen.classList.remove('hidden');
-                    finalScoreDisplay.textContent = `Your Score: ${score}`;
-                    if (rainInterval) clearInterval(rainInterval);
-                    if (score >= 5) {
-                        finalMessage.textContent = "Dammee Tompleteed!";
-                        resultGif.src = "kiss.gif";
-                        rainInterval = setInterval(() => createRain('❤️'), 200);
-                    } else {
-                        finalMessage.textContent = "Naap Naap, try again!";
-                        resultGif.src = "cry.gif";
-                        rainInterval = setInterval(() => createRain('😭'), 200);
-                    }
-                }
+      function whack(e) {
+        if (!gameStarted || !e.isTrusted) return;
+        const mole = e.target;
+        if (!mole.classList.contains('up')) return;
+        mole.classList.remove('up');
+        mole.classList.add('hit');
+        if (mole.dataset.type === 'good') {
+          score++;
+          goodSound.play();
+          createConfetti();
+        } else {
+          score = Math.max(0, score - 5);
+          badSound.play();
+          createBombEffect(e.clientX, e.clientY);
+        }
+        scoreSpan.textContent = score;
+      }
 
-                function createConfetti() {
-                    for (let i = 0; i < 15; i++) {
-                        const confetti = document.createElement('div');
-                        confetti.classList.add('confetti');
-                        confetti.style.left = `${Math.random() * 100}vw`;
-                        confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 70%)`;
-                        confetti.style.animationDelay = `${Math.random() * 0.5}s`;
-                        document.body.appendChild(confetti);
-                        setTimeout(() => confetti.remove(), 2000);
-                    }
-                }
+      function endGame() {
+        gameOverScreen.classList.remove('hidden');
+        finalScoreDisplay.textContent = `Your Score: ${score}`;
+        if (rainInterval) clearInterval(rainInterval);
+        if (score >= 5) {
+          finalMessage.textContent = "Dammee Tompleteed!";
+          resultGif.src = "kiss.gif";
+          rainInterval = setInterval(() => createRain('❤️'), 200);
+        } else {
+          finalMessage.textContent = "Naap Naap, try again!";
+          resultGif.src = "cry.gif";
+          rainInterval = setInterval(() => createRain('😭'), 200);
+        }
+      }
 
-                function createRain(emoji) {
-                    const rain = document.createElement('div');
-                    rain.classList.add('rain');
-                    rain.textContent = emoji;
-                    rain.style.left = `${Math.random() * 100}vw`;
-                    rain.style.animationDuration = `${Math.random() * 2 + 3}s`;
-                    document.body.appendChild(rain);
-                    setTimeout(() => rain.remove(), 5000);
-                }
+      function createConfetti() {
+        for (let i = 0; i < 15; i++) {
+          const c = document.createElement('div');
+          c.classList.add('confetti');
+          c.style.left = `${Math.random() * 100}vw`;
+          c.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 70%)`;
+          c.style.animationDelay = `${Math.random() * 0.5}s`;
+          document.body.appendChild(c);
+          setTimeout(() => c.remove(), 2000);
+        }
+      }
 
-                function createBombEffect(x, y) {
-                    const bomb = document.createElement('div');
-                    bomb.classList.add('bomb-effect');
-                    bomb.textContent = '💣';
-                    bomb.style.left = `${x - 24}px`;
-                    bomb.style.top = `${y - 24}px`;
-                    document.body.appendChild(bomb);
-                    setTimeout(() => bomb.remove(), 500);
-                }
+      function createRain(emoji) {
+        const r = document.createElement('div');
+        r.classList.add('rain');
+        r.textContent = emoji;
+        r.style.left = `${Math.random() * 100}vw`;
+        r.style.animationDuration = `${Math.random() * 2 + 3}s`;
+        document.body.appendChild(r);
+        setTimeout(() => r.remove(), 5000);
+      }
 
-                startButton.addEventListener('click', startGame);
-                playAgainButton.addEventListener('click', () => {
-                    gameOverScreen.classList.add('hidden');
-                    startButton.classList.remove('hidden');
-                    if (rainInterval) clearInterval(rainInterval);
-                    document.querySelectorAll('.rain').forEach(el => el.remove());
-                });
+      function createBombEffect(x, y) {
+        const b = document.createElement('div');
+        b.classList.add('bomb-effect');
+        b.textContent = '💣';
+        b.style.left = `${x - 24}px`;
+        b.style.top = `${y - 24}px`;
+        document.body.appendChild(b);
+        setTimeout(() => b.remove(), 500);
+      }
 
-                createHoles();
-            }
-        });
-    </script>
+      startButton.addEventListener('click', startGame);
+      playAgainButton.addEventListener('click', () => {
+        gameOverScreen.classList.add('hidden');
+        startButton.classList.remove('hidden');
+        if (rainInterval) clearInterval(rainInterval);
+        document.querySelectorAll('.rain').forEach(el => el.remove());
+      });
+
+      createHoles();
+    });
+  </script>
 </body>
 </html>
